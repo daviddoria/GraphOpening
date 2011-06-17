@@ -11,4 +11,3 @@ LINK_DIRECTORIES(${LINK_DIRECTORIES} ${Boost_LIBRARY_DIRS})
 
 #### Executables ####
 ADD_EXECUTABLE(GraphOpening GraphOpening.cxx)
-
