@@ -219,24 +219,39 @@ void WriteGraphWithVisibility(Graph& g, const std::string& fileName)
 
 Graph ReadGraph(const std::string& fileName)
 {
-  Graph graph;
-  boost::dynamic_properties dp; // not used
+  // Create a graph type with a vertex property to store the id of the vertices in the graphviz file
+  typedef boost::property < boost::vertex_name_t, std::string> VertexProperty;
+  typedef boost::adjacency_list < boost::vecS, boost::vecS, boost::undirectedS, VertexProperty> GraphFromFile;
   
-  boost::property_map<Graph, boost::vertex_name_t>::type name =
-    get(boost::vertex_name, graph);
+  // Read the graphviz file
+  GraphFromFile graphFromFile;
+  boost::dynamic_properties dp;
+  
+  boost::property_map<GraphFromFile, boost::vertex_name_t>::type name =
+    get(boost::vertex_name, graphFromFile);
   dp.property("node_id",name);
   
   std::ifstream fin(fileName.c_str());
-  boost::read_graphviz(fin,graph,dp);
-  /*
-  // Set all the edges to visible
-  std::pair<Graph::edge_iterator, Graph::edge_iterator> edgeRange = boost::edges(graph);
-  for(Graph::edge_iterator iterator = edgeRange.first;
-      iterator != edgeRange.second; ++iterator)
+  boost::read_graphviz(fin, graphFromFile, dp);
+
+  // Create a property_map of the input vertex ids
+  boost::property_map<GraphFromFile, boost::vertex_name_t>::type value = boost::get(boost::vertex_name_t(), graphFromFile);
+  
+  // Create a new graph of the desired type
+  Graph graph(boost::num_vertices(graphFromFile));
+  
+  // Iterate over the edges of the input graph and create edges in the output graph on the corresponding vertices
+  std::pair<GraphFromFile::edge_iterator, GraphFromFile::edge_iterator> edgePair;
+  for(edgePair = boost::edges(graphFromFile); edgePair.first != edgePair.second; ++edgePair.first)
   {
-    graph[*iterator].visible = true;
+    std::stringstream ssSource(value[boost::source(*edgePair.first, graphFromFile)]);
+    std::stringstream ssTarget(value[boost::target(*edgePair.first, graphFromFile)]);
+    unsigned int source = 0;
+    unsigned int target = 0;
+    ssSource >> source;
+    ssTarget >> target;
+    boost::add_edge(source, target, graph);
   }
-  */
   return graph;
 }
 
