@@ -36,117 +36,10 @@ This algorithm is based on "Efficient Closed Contour Extraction from Range Image
 #include <iostream>
 
 // Boost
-#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp> // For writing graphs to a file
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> Graph;
-
-std::vector<Graph::vertex_descriptor> FindEndPoints(Graph);
-
-Graph Dilate(Graph g, Graph parent);
-
-Graph Erode(Graph);
-
-unsigned int CountNeighbors(Graph, Graph::vertex_descriptor);
-
-std::vector<Graph::vertex_descriptor> GetNeighbors(Graph, Graph::vertex_descriptor);
-
-bool IsEndPoint(Graph, Graph::vertex_descriptor);
-
-bool EdgeExists(Graph g, Graph::vertex_descriptor v0, Graph::vertex_descriptor v1);
-
-Graph CreateDemoGraph();
-
-template <typename T>
-void OutputVector(std::vector<T>& v)
-{
-  for(unsigned int i = 0; i < v.size(); ++i)
-    {
-    std::cout << v[i] << " ";
-    }
-  std::cout << std::endl;
-}
-
-int main(int argc, char *argv[])
-{
-  Graph g = CreateDemoGraph();
-  
-  // Initialize the eroded graph to the original graph
-  Graph erodedGraph = g;
-  
-  unsigned int numberOfIterations = 2;
-  for(unsigned int i = 0; i < numberOfIterations; ++i)
-    {
-    std::cout << std::endl << "Erosion " << i << std::endl;
-    erodedGraph = Erode(erodedGraph);
-    }
-    
-  // Initialize the dilated graph to the last eroded graph
-  Graph dilatedGraph = erodedGraph;
-  
-  for(unsigned int i = 0; i < numberOfIterations; ++i)
-    {
-    std::cout << std::endl << "Dilation " << i << std::endl;
-    dilatedGraph = Dilate(dilatedGraph, g);
-    }
-  
-  return EXIT_SUCCESS;
-}
-
-Graph CreateDemoGraph()
-{
-    // Create the following graph
-  /*
-   *                                    v8          v14
-   *                                    |           |
-   * v0 --v1--v2--v3--v4---v5---v6--v7--v11--v12--v13--v15--v16--v17--v18
-   *                                    |
-   *                                    v9
-   *                                    |
-   *                                    v10
-   *
-   * After 1 erosion, the graph should look like:
-   *
-   *
-   * v1--v2--v3--v4--v5--v6--v7--v11--v12--v13--v15--v16--v17
-   *                              |
-   *                              v9
-   *
-   * After 2 erosions, the graph should look like:
-   * 
-   * v2--v3--v4--v5--v6--v7--v11--v12--v13--v15---v16
-   *
-   * After the first dilation, the graph should look like:
-   * 
-   * v1--v2--v3--v4--v5--v6--v7--v11--v12--v13--v15--v16--v17
-   *
-   * After the second dilation, the graph should look like:
-   *
-   * v0--v1--v2--v3--v4--v5--v6--v7--v11--v12--v13--v15--v16--v17--v18
-   */
-
-  Graph g(19);
-
-  boost::add_edge(0,1,g);
-  boost::add_edge(1,2,g);
-  boost::add_edge(2,3,g);
-  boost::add_edge(3,4,g);
-  boost::add_edge(4,5,g);
-  boost::add_edge(5,6,g);
-  boost::add_edge(6,7,g);
-  boost::add_edge(7,8,g);
-  boost::add_edge(7,9,g);
-  boost::add_edge(9,10,g);
-  boost::add_edge(7,11,g);
-  boost::add_edge(11,12,g);
-  boost::add_edge(12,13,g);
-  boost::add_edge(13,14,g);
-  boost::add_edge(13,15,g);
-  boost::add_edge(15,16,g);
-  boost::add_edge(16,17,g);
-  boost::add_edge(17,18,g);
-  
-  return g;
-}
+// Custom
+#include "GraphOpening.h"
 
 Graph Erode(Graph g)
 {
@@ -287,4 +180,124 @@ bool EdgeExists(Graph g, Graph::vertex_descriptor v0, Graph::vertex_descriptor v
     }
     
   return false;
+}
+
+void WriteGraph(Graph& g, const std::string& fileName)
+{
+  
+  std::ofstream fout(fileName.c_str());
+  boost::write_graphviz(fout,g);
+  
+}
+
+void WriteGraphWithVisibility(Graph& g, const std::string& fileName)
+{
+  // Iterate over all of the edges, setting their string property from their bool property
+  std::pair<Graph::edge_iterator, Graph::edge_iterator> edgeIteratorRange = boost::edges(g);
+  for(Graph::edge_iterator edgeIterator = edgeIteratorRange.first; edgeIterator != edgeIteratorRange.second; ++edgeIterator)
+    {
+    if(g[*edgeIterator].visible)
+      {
+      g[*edgeIterator].VisibilityString = "normal";
+      }
+    else
+      {
+      g[*edgeIterator].VisibilityString = "invis";
+      }
+    }
+    
+  // Setup the dynamic property which will be used to write the graph with edge properties
+  boost::dynamic_properties dp;
+  dp.property("style", get(&EdgeVisibility::VisibilityString, g));
+  dp.property("node_id", get(boost::vertex_index, g));
+
+  // Write out the graph
+  //boost::write_graphviz_dp(std::cout, g, dp);
+  std::ofstream fout(fileName.c_str());
+  boost::write_graphviz_dp(fout, g, dp);
+}
+
+Graph ReadGraph(const std::string& fileName)
+{
+  Graph graph;
+  boost::dynamic_properties dp; // not used
+  
+  boost::property_map<Graph, boost::vertex_name_t>::type name =
+    get(boost::vertex_name, graph);
+  dp.property("node_id",name);
+  
+  std::ifstream fin(fileName.c_str());
+  boost::read_graphviz(fin,graph,dp);
+  /*
+  // Set all the edges to visible
+  std::pair<Graph::edge_iterator, Graph::edge_iterator> edgeRange = boost::edges(graph);
+  for(Graph::edge_iterator iterator = edgeRange.first;
+      iterator != edgeRange.second; ++iterator)
+  {
+    graph[*iterator].visible = true;
+  }
+  */
+  return graph;
+}
+
+Graph OpenGraph(const Graph& g, unsigned int numberOfIterations)
+{
+ 
+  // Initialize the eroded graph to the original graph
+  Graph erodedGraph = g;
+  
+  
+  for(unsigned int i = 0; i < numberOfIterations; ++i)
+    {
+    std::cout << std::endl << "Erosion " << i << std::endl;
+  
+    erodedGraph = Erode(erodedGraph);
+    }
+    
+  // Initialize the dilated graph to the last eroded graph
+  Graph dilatedGraph = erodedGraph;
+  
+  for(unsigned int i = 0; i < numberOfIterations; ++i)
+    {
+    std::cout << std::endl << "Dilation " << i << std::endl;
+    dilatedGraph = Dilate(dilatedGraph, g);
+
+    }
+    
+  return dilatedGraph;
+}
+
+void OutputEdges(const Graph& g)
+{
+  std::pair<Graph::edge_iterator, Graph::edge_iterator> edgeIteratorRange = boost::edges(g);
+  for(Graph::edge_iterator edgeIterator = edgeIteratorRange.first; edgeIterator != edgeIteratorRange.second; ++edgeIterator)
+    {
+      std::cout << "Edge exists between " << boost::source(*edgeIterator, g) << " and " 
+                <<  boost::target(*edgeIterator, g) << std::endl;
+    }  
+}
+
+Graph CreateInvisibleEdgeGraph(const Graph& fullGraph, const Graph& currentGraph)
+{
+  Graph invisibleEdgeGraph = fullGraph;
+  
+  // Iterate over all of the edges of the original graph. If an edge doesn't exist in the currentGraph, mark it as invisible
+  // in the output graph
+  std::pair<Graph::edge_iterator, Graph::edge_iterator> edgeIteratorRange = boost::edges(fullGraph);
+  for(Graph::edge_iterator edgeIterator = edgeIteratorRange.first; edgeIterator != edgeIteratorRange.second; ++edgeIterator)
+    {
+    if(EdgeExists(currentGraph, boost::target(*edgeIterator, fullGraph), boost::source(*edgeIterator, fullGraph)))
+      {
+      std::cout << "Edge exists between " << boost::source(*edgeIterator, fullGraph) << " and " 
+                <<  boost::target(*edgeIterator, fullGraph) << std::endl;
+      invisibleEdgeGraph[*edgeIterator].VisibilityString = "normal";
+      }
+    else
+      {
+      std::cout << "Edge does NOT exist between " << boost::source(*edgeIterator, fullGraph) << " and " 
+		<<  boost::target(*edgeIterator, fullGraph) << std::endl;
+      invisibleEdgeGraph[*edgeIterator].VisibilityString = "invis";
+      }
+    }  
+  return invisibleEdgeGraph;
 }
