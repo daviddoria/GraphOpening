@@ -11,7 +11,7 @@ backref,
 colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 ]{hyperref}
 
-\title{Morphological Graph Opening}
+\title{Morphological Opening on a Graph}
 
 % 
 % NOTE: This is the last number of the "handle" URL that 
@@ -61,9 +61,7 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 \begin{abstract}
 \noindent
 
-This document presents an implementation of an algorithm to perform a morphological opening on a graph. The intent is to remove short branches in a graph while preserving the large scale structure.
-
-This implementation is based on the algorithm described in \cite{Sappa}. We have used the data structures from Boost Graph Library (BGL).
+This document presents an implementation of an algorithm to perform a morphological opening on a graph. The intent is to remove short branches in a graph while preserving the large scale structure. This implementation is based on the algorithm described in ``Efficient Closed Contour Extraction from Range Image's Edge Points''. We have used the data structures from Boost Graph Library (BGL).
 
 The code is available here:
 https://github.com/daviddoria/GraphOpening
@@ -75,9 +73,7 @@ https://github.com/daviddoria/GraphOpening
 \tableofcontents
 %%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-This document presents an implementation of an algorithm to perform a morphological opening on a graph. This opening consists of a series of erosions, followed by a series of dilations. This is often done as a first step in contour closure algorithms.
-
-This implementation is based on the algorithm described in \cite{Sappa}.
+This document presents an implementation of an algorithm to perform a morphological opening on a graph. This opening consists of a series of erosions, followed by a series of dilations. This is often done as a first step in contour closure algorithms. This implementation is based on the algorithm described in \cite{Sappa}.
 
 %%%%%%%%%%%%%%%%%%%%
 \section{Graph Erosion}
@@ -90,16 +86,19 @@ The morphological dilation operation on a graph is only defined on a graph which
 %%%%%%%%%%%%%%%%%%%%
 \section{Algorithm}
 \label{sec:Algorithm}
-Now that these two basic operations have been defined, we can describe the morphological opening operation. The algorithm proceeds as follow:
+Now that we have described the two basic operations of erosion and dilation we can describe the morphological opening operation. The algorithm proceeds as follow:
 \begin{itemize}
  \item Erode the graph multiple times until a stopping criteria is met
  \item Dilate the graph the same number of times as the graph was eroded
 \end{itemize}
 
-Note that this typically does not simply re-grow the original graph. If enough erosions were performed to absorb a branch completely, the branch will not grow back unless the erosion has continued so far that the root of the brach eventually becomes an end point of a future iteration.
+Note that this typically does not simply re-grow the original graph. If enough erosions were performed to absorb a branch completely, the branch will not grow back unless the erosion has continued so far that the root of the branch eventually becomes an end point of a future iteration.
 
 \subsection{Stopping Criteria}
+\subsubsection{Naive Approach}
 The only parameter to be set is how many erosions to perform (as the number of dilations must be the same number).
+\subsubsection{Null Removal Difference}
+Recall that our goal is to preserve large structure in a graph. A good indication that we have arrived at a ``stable'' large structure is that the number of edges removed in successive erosion operations remains constant for some specified number of iterations. That is, if we remove 3 edges on the first erosion, then 5 edges on the next erosion (a difference of 2), the graph structure is likely still changing. However, if we move 3 edges on the first erosion, then 3 edges on the next erosion (a difference of 0), the graph structure has potentially stabilized, if we proceed with a few more erosions and we continually remove 3 edges, then we can be rather sure that the large scale structure has been found.
 
 \subsection{Speedup}
 \subsubsection{Naive Approach}
@@ -113,30 +112,6 @@ After each erosion is performed, the set of candidate vertices for the next step
 After each dilation, the set of candidate vertices for the next step consists of the vertices that were newly re-attached to the graph.
 
 If an edge was removed in the erosion process, as long as it belonged to the child-most branch that was entirely removed, it will not be regrown in the dilation process.
-
-
-% \begin{figure}[H]
-% \centering
-% \subfigure[A brown rectangular object.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/rectangleSolid}
-%   \label{fig:EdgeImage:Image}
-%   }
-% \subfigure[A simple edge pixel classification. White pixels are edge pixels.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/rectangleSolidEdgeThresholded}
-%   \label{fig:EdgeImage:EdgeImage}
-%   }
-% \caption{An image of an object and its corresponding edge image.}
-% \label{fig:EdgeImage}
-% \end{figure}
-
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.3\linewidth]{images/rectanglePoints}
-%   \caption{A solid point cloud of a rectangular 2D object.}
-%   \label{fig:SolidPointCloud}
-% \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%
 \section{Demonstration}
@@ -163,7 +138,7 @@ In Figure \ref{fig:1Iteration}, we show the result of one erosion and one dilati
 \label{fig:1Iteration}
 \end{figure}
 
-In Figure \ref{fig:2Iterations}, we show the result of one erosion and one dilation. Note that all of the short branches were completely removed. The number of erosions and dilations are indicated in the captions. For example, $\#E=2, \#D=1$ indicates 2 erosions and 1 dilation have been performed.
+In Figure \ref{fig:2Iterations}, we show the result of one erosion and one dilation. Note that all of the short branches were completely removed, while the large scale structure was preserved. The number of erosions and dilations are indicated in the captions. For example, $\#E=2, \#D=1$ indicates 2 erosions and 1 dilation have been performed.
 
 \begin{figure}[H]
 \centering
@@ -197,10 +172,23 @@ In Figure \ref{fig:2Iterations}, we show the result of one erosion and one dilat
 \end{figure}
 
 %%%%%%%%%%%%%%%
+\section{Code Breakdown}
+\begin{itemize}
+ \item Types.h - Defines the graph structure used throughout this code.
+ \item Helpers.h/cxx - Defines several functions that are not related to the morphological operations. These are supporting functions for the algorithm implementations.
+ \item GraphOpeningNaive.*, GraphOpeningNaiveExample.cxx - this is the naive implementation of the algorithm, where the search for end points is exhaustive.
+ \item GraphOpeningTracking.*, GraphOpeningTrackingExample.cxx - this is the implementation of the speedup which tracks potential end points during each operation. You should use these functions in a real application.
+ \item Demo.cxx - There is significant overhead in producing images of graphs with missing edges without the vertices being repositioned. To do this, after each operation we create a graph with identical structure to the original graph, but with edges that have been removed marked as ``invisible''. The layout program ('neato' from 'graphviz'), then positions the vertices identically, but does not draw the edges that should have been removed. This is necessary for easy visualization of each step of the algorithm, but should not be done in a production application.
+\end{itemize}
+
+%%%%%%%%%%%%%%%
 \section{Code Snippet}
-
+The interface to the code is very simple, as shown below:
 \begin{verbatim}
-
+  Graph graph = ReadGraph("input.dot");
+  unsigned int numberOfIterations = 2;
+  Graph openedGraph = OpenGraphFixedTracking(graph, numberOfIterations);
+  WriteGraph(openedGraph, "output.dot");
 \end{verbatim}
 
 

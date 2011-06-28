@@ -36,4 +36,10 @@ Graph ErodeTracking(const Graph& g, const std::vector<Graph::vertex_descriptor>&
 // erosion and dilation operation so that an exhaustive search is only necessary at the beginning.
 Graph OpenGraphFixedTracking(const Graph& g, unsigned int numberOfIterations);
 
+// This function performs the morphological opening on the graph 'g' until the number of edges removed in
+// 'goalSuccessiveNullDifferences' successive iterations is constant (the difference between the number of edges removed
+// in successive iterations is 0). The end points are tracked after each erosion and dilation operation so that
+// an exhaustive search is only necessary at the beginning.
+Graph OpenGraphNullRemovalDifferenceTracking(const Graph& g, unsigned int goalSuccessiveNullDifferences);
+
 #endif

@@ -124,3 +124,50 @@ Graph OpenGraphFixedTracking(const Graph& g, unsigned int numberOfIterations)
     
   return dilatedGraph;
 }
+
+Graph OpenGraphNullRemovalDifferenceTracking(const Graph& g, unsigned int goalSuccessiveNullDifferences)
+{
+  // Initialize the eroded graph to the original graph
+  Graph erodedGraph = g;
+  
+  std::vector<Graph::vertex_descriptor> inputPotentialEndPoints = FindEndPoints(g);
+  std::vector<Graph::vertex_descriptor> outputPotentialEndPoints;
+  
+  unsigned int numberOfErosions = 0;
+  unsigned int numberOfSuccessiveNullDifferences = 0;
+  unsigned int numberOfEdgesPreviouslyRemoved = 0;
+  while(numberOfSuccessiveNullDifferences < goalSuccessiveNullDifferences)
+    {
+    std::cout << std::endl << "TrackingErosion " << numberOfErosions << std::endl;
+  
+    erodedGraph = ErodeTracking(erodedGraph, inputPotentialEndPoints, outputPotentialEndPoints);
+    inputPotentialEndPoints = outputPotentialEndPoints;
+  
+    unsigned int numberOfEdgesRemoved = outputPotentialEndPoints.size();
+    
+    if(numberOfEdgesRemoved == numberOfEdgesPreviouslyRemoved)
+      {
+      numberOfSuccessiveNullDifferences++;
+      }
+    else
+      {
+      numberOfSuccessiveNullDifferences = 0;
+      }
+    std::cout << "after iteration " << numberOfErosions << " there are " << numberOfSuccessiveNullDifferences 
+              << " successive null differences." << std::endl;
+    numberOfEdgesPreviouslyRemoved = numberOfEdgesRemoved;
+    numberOfErosions++;
+    }
+    
+  // Initialize the dilated graph to the last eroded graph
+  Graph dilatedGraph = erodedGraph;
+  
+  for(unsigned int i = 0; i < numberOfErosions; ++i)
+    {
+    std::cout << std::endl << "TrackingDilation " << i << std::endl;
+    dilatedGraph = DilateTracking(dilatedGraph, g, inputPotentialEndPoints, outputPotentialEndPoints);
+    inputPotentialEndPoints = outputPotentialEndPoints;
+    }
+    
+  return dilatedGraph;
+}

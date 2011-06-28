@@ -112,11 +112,7 @@ After each erosion is performed, the set of candidate vertices for the next step
 \paragraph{Dilation Speedup}
 After each dilation, the set of candidate vertices for the next step consists of the vertices that were newly re-attached to the graph.
 
-%%%%%%%%%%%%%%%%%%%%
-\section{Notes and Behavior}
-\begin{itemize}
- \item If an edge was removed in the erosion process, as long as it belonged to the child-most branch that was entirely removed, it will not be regrown in the dilation process.
-\end{itemize}
+If an edge was removed in the erosion process, as long as it belonged to the child-most branch that was entirely removed, it will not be regrown in the dilation process.
 
 
 % \begin{figure}[H]
@@ -145,27 +141,60 @@ After each dilation, the set of candidate vertices for the next step consists of
 %%%%%%%%%%%%%%%%%%%%
 \section{Demonstration}
 \label{sec:Demonstration}
+In Figure \ref{fig:1Iteration}, we show the result of one erosion and one dilation. Note that the branches of length 1 were completely removed, while the branch of length 2 was only made shorter.
+\begin{figure}[H]
+\centering
+\subfigure[Original graph.]
+  {
+  \includegraphics[width=0.3\linewidth]{images/opening1_0}
+  \label{fig:1Iteration:Original}
+  }
+\subfigure[After 1 erosion.]
+  {
+  \includegraphics[width=0.3\linewidth]{images/opening1_1}
+  \label{fig:1Iteration:1Erosion}
+  }
+\subfigure[After 1 erosion and 1 dilation.]
+  {
+  \includegraphics[width=0.3\linewidth]{images/opening1_2}
+  \label{fig:1Iteration:1Erosion1Dilation}
+  }
+\caption{One iteration of the opening operation.}
+\label{fig:1Iteration}
+\end{figure}
 
-% \begin{figure}[H]
-% \centering
-% \subfigure[Image to be filled. The region to be filled is shown in bright green.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/BlackWhite}
-%   \label{fig:SyntheticDemonstration:ExampleInputImage}
-%   }
-% \subfigure[The mask of the region to inpaint.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/BlackWhiteMask}
-%   \label{fig:SyntheticDemonstration:ExampleInputMask}
-%   }
-% \subfigure[The result of the inpainting.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/BlackWhiteResult}
-%   \label{fig:SyntheticDemonstration:ExampleInputOutput}
-%   }
-% \caption{Synthetic Demonstration}
-% \label{fig:SyntheticDemonstration}
-% \end{figure}
+In Figure \ref{fig:2Iterations}, we show the result of one erosion and one dilation. Note that all of the short branches were completely removed, while the large scale structure was preserved. The number of erosions and dilations are indicated in the captions. For example, $\#E=2, \#D=1$ indicates 2 erosions and 1 dilation have been performed.
+
+\begin{figure}[H]
+\centering
+\subfigure[Original graph.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_0}
+  \label{fig:2Iterations:Original}
+  }
+\subfigure[$\#E=1, \#D=0$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_1}
+  \label{fig:2Iterations:1Erosion}
+  }
+\subfigure[$\#E=2, \#D=0$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_2}
+  \label{fig:2Iterations:2Erosions}
+  }
+\subfigure[$\#E=2, \#D=1$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_3}
+  \label{fig:2Iterations:2Erosions1Dilation}
+  }
+\subfigure[$\#E=2, \#D=2$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_4}
+  \label{fig:2Iterations:2Erosions2Dilations}
+  }
+\caption{Two iterations of the opening operation.}
+\label{fig:2Iterations}
+\end{figure}
 
 %%%%%%%%%%%%%%%
 \section{Code Snippet}
