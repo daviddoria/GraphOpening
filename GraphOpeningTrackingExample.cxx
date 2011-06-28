@@ -28,25 +28,36 @@
 #include <boost/graph/graphviz.hpp>
 
 // Custom
-#include "GraphOpening.h"
+#include "GraphOpeningTracking.h"
+#include "Helpers.h"
 
 int main(int argc, char *argv[])
 {
   // Verify arguments
-  if(argc < 3)
+  if(argc < 4)
     {
-    std::cerr << "Required arguments: input.dot output.dot" << std::endl;
+    std::cerr << "Required arguments: input.dot numberOfIterations output.dot" << std::endl;
     return -1;
     }
   
   // Parse arguments
   std::string inputFileName = argv[1];
-  std::string outputFileName = argv[2];
+  
+  unsigned int numberOfIterations = 0;
+  std::stringstream ss(argv[2]);
+  ss >> numberOfIterations;
+  
+  std::string outputFileName = argv[3];
+  
+  // Output arguments
+  std::cout << "Input: " << inputFileName << std::endl;
+  std::cout << "Number of iterations: " << numberOfIterations << std::endl;
+  std::cout << "Output: " << outputFileName << std::endl;
   
   // Read the graph
   Graph graph = ReadGraph(inputFileName);
 
-  Graph openedGraph = OpenGraph(graph, 2);
+  Graph openedGraph = OpenGraphFixedTracking(graph, 2);
   
   WriteGraph(openedGraph, outputFileName);
   

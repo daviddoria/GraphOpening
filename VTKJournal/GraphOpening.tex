@@ -81,34 +81,38 @@ This implementation is based on the algorithm described in \cite{Sappa}.
 
 %%%%%%%%%%%%%%%%%%%%
 \section{Graph Erosion}
-Remove all edges attached to EndPoints (leaf nodes). After multiple iterations of this, small branches
-will be "absorbed" into a main branch.
+The morphological erosion operation on a graph is defined as removing all edges attached to \emph{end points}. An end point is a vertex with only one incident edge (a vertex with degree 1). The effect of performing multiple iterations of this operation on a graph is that small branches will be "absorbed" into a larger, parent branch.
 
 %%%%%%%%%%%%%%%%%%%%
 \section{Graph Dilation}
-Add back edges to current EndPoints. This is NOT simply going to grow back the same tree. If we ran the erosion enough times
-to absorb a branch, the branch will not grow back. If we did not, then the branch will indeed grow back.
+The morphological dilation operation on a graph is only defined on a graph which has previously been eroded. The dilation adds back edges to current end points that were removed in a previous erosion operation.
 
 %%%%%%%%%%%%%%%%%%%%
 \section{Algorithm}
 \label{sec:Algorithm}
-The algorithm proceeds as follow:
+Now that these two basic operations have been defined, we can describe the morphological opening operation. The algorithm proceeds as follow:
 \begin{itemize}
- \item Erode the graph until a stopping criteria is met
+ \item Erode the graph multiple times until a stopping criteria is met
  \item Dilate the graph the same number of times as the graph was eroded
 \end{itemize}
 
-\subsection{Naive Approach}
-At each iteration, erode or dilate the graph while considering nothing about the previous step. In both the erosion and dilation steps, this means finding all of the end points at every iteration, which is the only costly procedure in the algorithm.
+Note that this typically does not simply re-grow the original graph. If enough erosions were performed to absorb a branch completely, the branch will not grow back unless the erosion has continued so far that the root of the brach eventually becomes an end point of a future iteration.
+
+\subsection{Stopping Criteria}
+The only parameter to be set is how many erosions to perform (as the number of dilations must be the same number).
 
 \subsection{Speedup}
-A list of the remaining vertices after every edge removal is created. These are the only potential candiates which must be determined to be end points or not at the next iteration.
+\subsubsection{Naive Approach}
+The most straight forward implementation is to, at each iteration, perform an exhaustive search of the vertices to determine which ones have degree 1. Since finding the end points is the only costly procedure in the algorithm, this is a bad idea.
 
-%%%%%%%%%%%%%%%%%%%%
-\section{Notes and Behavior}
-\begin{itemize}
- \item If an edge was removed in the erosion process, as long as it belonged to the child-most branch that was entirely removed, it will not be regrown in the dilation process.
-\end{itemize}
+\subsubsection{Speedup}
+An exhaustive search for end points must be performed on the original graph at the beginning of the algorithm. However, at both the erosion and dilation steps, we can search a much smaller set of vertices for end points.
+\paragraph{Erosion Speedup}
+After each erosion is performed, the set of candidate vertices for the next step (either erosion or dilation) consists of the vertices that were attached to the edges that were removed, excluding the vertices that are now degree 0 (no longer attached to the graph).
+\paragraph{Dilation Speedup}
+After each dilation, the set of candidate vertices for the next step consists of the vertices that were newly re-attached to the graph.
+
+If an edge was removed in the erosion process, as long as it belonged to the child-most branch that was entirely removed, it will not be regrown in the dilation process.
 
 
 % \begin{figure}[H]
@@ -137,27 +141,60 @@ A list of the remaining vertices after every edge removal is created. These are 
 %%%%%%%%%%%%%%%%%%%%
 \section{Demonstration}
 \label{sec:Demonstration}
+In Figure \ref{fig:1Iteration}, we show the result of one erosion and one dilation. Note that the branches of length 1 were completely removed, while the branch of length 2 was only made shorter.
+\begin{figure}[H]
+\centering
+\subfigure[Original graph.]
+  {
+  \includegraphics[width=0.3\linewidth]{images/opening1_0}
+  \label{fig:1Iteration:Original}
+  }
+\subfigure[After 1 erosion.]
+  {
+  \includegraphics[width=0.3\linewidth]{images/opening1_1}
+  \label{fig:1Iteration:1Erosion}
+  }
+\subfigure[After 1 erosion and 1 dilation.]
+  {
+  \includegraphics[width=0.3\linewidth]{images/opening1_2}
+  \label{fig:1Iteration:1Erosion1Dilation}
+  }
+\caption{One iteration of the opening operation.}
+\label{fig:1Iteration}
+\end{figure}
 
-% \begin{figure}[H]
-% \centering
-% \subfigure[Image to be filled. The region to be filled is shown in bright green.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/BlackWhite}
-%   \label{fig:SyntheticDemonstration:ExampleInputImage}
-%   }
-% \subfigure[The mask of the region to inpaint.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/BlackWhiteMask}
-%   \label{fig:SyntheticDemonstration:ExampleInputMask}
-%   }
-% \subfigure[The result of the inpainting.]
-%   {
-%   \includegraphics[width=0.3\linewidth]{images/BlackWhiteResult}
-%   \label{fig:SyntheticDemonstration:ExampleInputOutput}
-%   }
-% \caption{Synthetic Demonstration}
-% \label{fig:SyntheticDemonstration}
-% \end{figure}
+In Figure \ref{fig:2Iterations}, we show the result of one erosion and one dilation. Note that all of the short branches were completely removed. The number of erosions and dilations are indicated in the captions. For example, $\#E=2, \#D=1$ indicates 2 erosions and 1 dilation have been performed.
+
+\begin{figure}[H]
+\centering
+\subfigure[Original graph.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_0}
+  \label{fig:2Iterations:Original}
+  }
+\subfigure[$\#E=1, \#D=0$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_1}
+  \label{fig:2Iterations:1Erosion}
+  }
+\subfigure[$\#E=2, \#D=0$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_2}
+  \label{fig:2Iterations:2Erosions}
+  }
+\subfigure[$\#E=2, \#D=1$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_3}
+  \label{fig:2Iterations:2Erosions1Dilation}
+  }
+\subfigure[$\#E=2, \#D=2$.]
+  {
+  \includegraphics[width=0.17\linewidth]{images/opening2_4}
+  \label{fig:2Iterations:2Erosions2Dilations}
+  }
+\caption{Two iterations of the opening operation.}
+\label{fig:2Iterations}
+\end{figure}
 
 %%%%%%%%%%%%%%%
 \section{Code Snippet}

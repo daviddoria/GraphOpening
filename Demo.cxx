@@ -24,24 +24,29 @@
 #include <sstream>
 
 // Custom
-#include "GraphOpening.h"
+#include "GraphOpeningNaive.h"
+#include "Helpers.h"
+
+Graph CreateGraph();
 
 int main(int argc, char *argv[])
 {
   // Verify arguments
   if(argc < 2)
     {
-    std::cerr << "Required arguments: input.dot" << std::endl;
+    std::cerr << "Required arguments: numberOfIterations" << std::endl;
     return -1;
     }
     
-  // Parse arguments
-  std::string inputFileName = argv[1];
+  unsigned int numberOfIterations = 0;
+  std::stringstream ss(argv[1]);
+  ss >> numberOfIterations;
   
   // Output arguments
-  std::cout << "Input: " << inputFileName << std::endl;
+  std::cout << "Number of iterations: " << numberOfIterations << std::endl;
   
-  Graph g = ReadGraph(inputFileName);
+  Graph g = CreateGraph();
+  WriteGraph(g, "original.dot");
   
   std::cout << "Original graph: " << std::endl;
   OutputEdges(g);
@@ -49,17 +54,17 @@ int main(int argc, char *argv[])
   // Initialize the eroded graph to the original graph
   Graph erodedGraph = g;
   
-  unsigned int numberOfIterations = 2;
   for(unsigned int i = 0; i < numberOfIterations; ++i)
     {
     std::cout << std::endl << "Erosion " << i << std::endl;
   
-    erodedGraph = Erode(erodedGraph);
+    erodedGraph = ErodeNaive(erodedGraph);
   
     std::stringstream ss;
     ss << "eroded_" << i << ".dot";
     //WriteGraphWithVisibility(erodedGraph, ss.str());
     Graph invisibleEdgeGraph = CreateInvisibleEdgeGraph(g, erodedGraph);
+    
     WriteGraphWithVisibility(invisibleEdgeGraph, ss.str());
 
     }
@@ -70,7 +75,7 @@ int main(int argc, char *argv[])
   for(unsigned int i = 0; i < numberOfIterations; ++i)
     {
     std::cout << std::endl << "Dilation " << i << std::endl;
-    dilatedGraph = Dilate(dilatedGraph, g);
+    dilatedGraph = DilateNaive(dilatedGraph, g);
   
     std::stringstream ss;
     ss << "dilated_" << i << ".dot";
@@ -79,4 +84,30 @@ int main(int argc, char *argv[])
     }
   
   return EXIT_SUCCESS;
+}
+
+Graph CreateGraph()
+{
+  Graph g(19);
+ 
+  boost::add_edge(0,1,g);
+  boost::add_edge(1,2,g);
+  boost::add_edge(2,3,g);
+  boost::add_edge(3,4,g);
+  boost::add_edge(4,5,g);
+  boost::add_edge(5,6,g);
+  boost::add_edge(6,7,g);
+  boost::add_edge(7,8,g);
+  boost::add_edge(7,9,g);
+  boost::add_edge(9,10,g);
+  boost::add_edge(7,11,g);
+  boost::add_edge(11,12,g);
+  boost::add_edge(12,13,g);
+  boost::add_edge(13,14,g);
+  boost::add_edge(13,15,g);
+  boost::add_edge(15,16,g);
+  boost::add_edge(16,17,g);
+  boost::add_edge(17,18,g);
+ 
+  return g;
 }

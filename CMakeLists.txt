@@ -9,11 +9,14 @@ INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${LINK_DIRECTORIES} ${Boost_LIBRARY_DIRS})
 
 #### Executables ####
-ADD_EXECUTABLE(Example Example.cxx GraphOpening.cxx)
-target_link_libraries(Example boost_graph)
+ADD_EXECUTABLE(GraphOpeningTrackingExample GraphOpeningTrackingExample.cxx Helpers.cxx GraphOpeningTracking.cxx)
+target_link_libraries(GraphOpeningTrackingExample boost_graph)
 
-ADD_EXECUTABLE(Demo Demo.cxx GraphOpening.cxx)
+ADD_EXECUTABLE(GraphOpeningNaiveExample GraphOpeningNaiveExample.cxx Helpers.cxx GraphOpeningNaive.cxx)
+target_link_libraries(GraphOpeningNaiveExample boost_graph)
+
+ADD_EXECUTABLE(Demo Demo.cxx Helpers.cxx GraphOpeningNaive.cxx)
 target_link_libraries(Demo boost_graph)
 
-ADD_EXECUTABLE(CreateDemoGraph CreateDemoGraph.cxx GraphOpening.cxx)
-target_link_libraries(CreateDemoGraph boost_graph)
+# ADD_EXECUTABLE(CreateDemoGraph CreateDemoGraph.cxx GraphOpening.cxx)
+# target_link_libraries(CreateDemoGraph boost_graph)
