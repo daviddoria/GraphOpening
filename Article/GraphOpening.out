@@ -1,0 +1,13 @@
+\BOOKMARK [1][]{section.1}{Introduction}{}
+\BOOKMARK [1][]{section.2}{Graph Erosion}{}
+\BOOKMARK [1][]{section.3}{Graph Dilation}{}
+\BOOKMARK [1][]{section.4}{Algorithm}{}
+\BOOKMARK [2][]{subsection.4.1}{Stopping Criteria}{section.4}
+\BOOKMARK [3][]{section*.2}{Naive Approach}{subsection.4.1}
+\BOOKMARK [3][]{section*.3}{Null Removal Difference}{subsection.4.1}
+\BOOKMARK [2][]{subsection.4.2}{Speedup}{section.4}
+\BOOKMARK [3][]{section*.4}{Naive Approach}{subsection.4.2}
+\BOOKMARK [3][]{section*.5}{Speedup}{subsection.4.2}
+\BOOKMARK [1][]{section.5}{Demonstration}{}
+\BOOKMARK [1][]{section.6}{Code Breakdown}{}
+\BOOKMARK [1][]{section.7}{Code Snippet}{}
